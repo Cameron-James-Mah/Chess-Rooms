@@ -8,7 +8,8 @@ import { useLocation } from "react-router-dom";
 import { Typography, List, ListItemText, Box, TextField } from "@mui/material";
 
 import io from 'socket.io-client'
-const socket = io.connect("http://localhost:3001")
+//const socket = io.connect("http://localhost:3001")
+const socket = io.connect("https://chess-rooms-app.onrender.com")
 
 
 
