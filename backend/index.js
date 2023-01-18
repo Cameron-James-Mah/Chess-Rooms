@@ -10,7 +10,7 @@ const server = http.createServer(app)
 
 const io = new Server(server, {
     cors:{
-        origin: "http://localhost:3000",
+        origin: ["http://localhost:3000", "https://chess-rooms-app.onrender.com"],
         methods: ["GET", "POST"]
     }
 })
@@ -54,7 +54,7 @@ io.on("connection", (socket)=>{
         socket.nickmame = myName
     })
     socket.on("send_chat", (data)=>{
-        console.log(data)
+        //console.log(data)
         socket.to(data.room).emit("recieve_chat", data.message)
     })
 })
