@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Chess } from "chess.js";
 import moveAudio from "../media/move-self.mp3"
 import captureAudio from "../media/capture.mp3"
+import { useLocation } from "react-router-dom";
+
+import { Typography, List, ListItemText, Box, TextField } from "@mui/material";
 
 import io from 'socket.io-client'
 const socket = io.connect("http://localhost:3001")
@@ -10,7 +13,12 @@ const socket = io.connect("http://localhost:3001")
 
 
 const Board = () =>{
+    const [chatLog, setChatLog] = useState([])
     const [game, setGame] = useState(new Chess());
+    const [opponent, setOpponent] = useState("");
+    const location = useLocation();
+    let {roomName} = location.state;
+    let {name} = location.state;
     const [color, setColor] = useState("Waiting for opponent...")
     const moveSound = new Audio(moveAudio);
     const captureSound = new Audio(captureAudio);
@@ -19,6 +27,10 @@ const Board = () =>{
         socket.emit("send_move", data)
     }
 
+    const joinRoom = () =>{
+        socket.emit("join_room", roomName)
+        console.log(`Joining room ${roomName}`)
+    }
 
     
     function makeAMove(move) {
@@ -32,9 +44,8 @@ const Board = () =>{
     }
 
     
-    
     function onDrop(sourceSquare, targetSquare) {
-        if(game.turn() == 'w' && `${color}` == "White" || game.turn() == 'b' && `${color}` == "Black"){
+        if(game.turn() == 'w' && `${color}` == "white" || game.turn() == 'b' && `${color}` == "black"){
             const res = makeAMove({
                 from: sourceSquare,
                 to: targetSquare,
@@ -48,9 +59,23 @@ const Board = () =>{
                 }
             }
         }
-        
+    }
+
+    function handleKeyDown(e){
+        let s = e.target.value
+        if (e.key === 'Enter' && s.length > 0) {
+            s = `${name}: `+s
+            setChatLog(chatLog =>[...chatLog, s])
+            socket.emit("send_chat", {message: s, room: roomName})
+        }
         
     }
+
+    useEffect(()=>{
+        socket.emit("set_nickname", name)
+        joinRoom()
+    }, [])
+    
 
     useEffect(()=> {
         //console.log(1)
@@ -77,18 +102,45 @@ const Board = () =>{
             setColor(col)
             //console.log(col)
         })
-
+        socket.on("get_opponent", (oppName) =>{
+            setOpponent(oppName)
+        })
+        socket.on("recieve_chat", (s)=>{
+            setChatLog(chatLog =>[...chatLog, s])
+        })
     }, [socket])
 
     return (
     <>
-        <div style = {{width: '40%',alignItems: 'center', marginLeft: '25%',justifyContent: 'center'}}>
-            <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard"/>
-        </div>
-        <div>
-            <p style={{fontSize:18}}>{color}</p>
-        </div>
+        <Typography align="right" variant = "h4" marginRight={30}>Room: {roomName}</Typography>
+        <div style = {{marginTop: '1vw', display: 'flex', flexDirection: 'row'}}>
+            <div style = {{alignItems: 'center', marginLeft: '25%',justifyContent: 'center', width: '80vh'}}>
+            <Typography variant = "h4">{opponent}</Typography>
+            <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard" boardOrientation={color}/>
+            <Typography variant = "h4">{name}</Typography>
+            </div>
+            <Box sx={{border: '1px solid grey', width: '20%', marginLeft: '5%', position: "relative", maxHeight: '70vh', marginTop: '5%'}}>
+                <Typography variant = "h4" align="center">Chat</Typography>
+            <List sx={{
+                width: '90%',
+                bgcolor: 'background.paper',
+                position: 'relative',
+                overflow: 'auto',
+                maxHeight: '55vh',
+                marginLeft: '10%'
+            }}>
+                {chatLog.map((elem)=>(
+                    <ListItemText primary = {`${elem}`}/>
+                ))}
 
+            </List>
+                <TextField label="Say something..." variant="outlined" sx = {{marginLeft: '0%', position: "absolute", bottom: 0, width: '100%'}} onKeyDown = {handleKeyDown} />
+            </Box>
+            
+        </div>
+        
+        
+        
     </>
   );
 }
