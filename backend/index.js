@@ -1,5 +1,3 @@
-
-
 const express = require('express')
 const app = express()
 const http = require('http')
@@ -30,14 +28,14 @@ io.on("connection", (socket)=>{
                 console.log(clientID)
                 io.to(clientID).emit("recieve_color", `${clientID}`)
             }*/
-            
+            //11 26 97
             //CHange this later to be desired color
-            io.to(clientsArray[0]).emit("recieve_color", "white")
+            io.to(clientsArray[0]).emit("receive_color", "white")
             let nick = io.sockets.sockets.get(clientsArray[1]).nickmame;
             io.to(clientsArray[0]).emit("get_opponent", nick)
             
 
-            io.to(clientsArray[1]).emit("recieve_color", "black")
+            io.to(clientsArray[1]).emit("receive_color", "black")
             nick = io.sockets.sockets.get(clientsArray[0]).nickmame;
             io.to(clientsArray[1]).emit("get_opponent", nick)
         }
@@ -45,7 +43,7 @@ io.on("connection", (socket)=>{
     
     socket.on("send_move", (data)=>{//change this to specify room later
         //console.log(data)
-        socket.broadcast.emit("recieve_move", data)
+        socket.broadcast.emit("receive_move", data)
     })
     socket.on("disconnect", () => {
         //console.log(socket.id);    
@@ -55,7 +53,13 @@ io.on("connection", (socket)=>{
     })
     socket.on("send_chat", (data)=>{
         //console.log(data)
-        socket.to(data.room).emit("recieve_chat", data.message)
+        socket.to(data.room).emit("receive_chat", data.message)
+    })
+    socket.on("send_time", (data)=>{
+        socket.to(data.room).emit("receive_time", data.time)
+    })
+    socket.on("no_time", (data)=>{
+        socket.to(data.room).emit("win_game", data.col)
     })
 })
 
