@@ -25,7 +25,7 @@ const Board = () =>{
     const color = useRef("")
     const moveSound = new Audio(moveAudio);
     const captureSound = new Audio(captureAudio);
-    const [mySeconds, setMySeconds] = useState(10)
+    const [mySeconds, setMySeconds] = useState(600)
     const [myTime, setMyTime] = useState("")
     const [oppTime, setOppTime] = useState("10:00")
     const wonOnTime = useRef(false)
