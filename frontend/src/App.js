@@ -4,15 +4,6 @@ import Home from './components/Home';
 
 import ChessBG from "./media/ChessBG.jpg"
 
-const containerStyle= {
-        width: '100vw',
-        height: '100vh',
-        backgroundImage: `url(${ChessBG})`,
-        backgroundPosition: 'center',
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-}
-
 const App = () =>{
     return(
         <>

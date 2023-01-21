@@ -9,10 +9,8 @@ import { Typography, List, ListItemText, Box, TextField } from "@mui/material";
 
 import io from 'socket.io-client'
 
-//const socket = io.connect("http://localhost:3001")
-const socket = io.connect("https://chess-rooms-app.onrender.com")
-
-
+const socket = io.connect("http://localhost:3001")
+//const socket = io.connect("https://chess-rooms-app.onrender.com")
 
 const Board = () =>{
     const [chatLog, setChatLog] = useState([])
@@ -36,7 +34,7 @@ const Board = () =>{
 
     const joinRoom = () =>{ //Called immediately on render
         socket.emit("join_room", roomName)
-        console.log(`Joining room ${roomName}`)
+        //console.log(`Joining room ${roomName}`)
     }
 
     
@@ -44,29 +42,32 @@ const Board = () =>{
         const gameCopy = new Chess();
         gameCopy.loadPgn(game.pgn());
         const result = gameCopy.move(move);
-        setGame(gameCopy); 
-        sendBoard(gameCopy.pgn())
-        console.log(gameCopy.pgn())
+        if(result){
+            setGame(gameCopy); 
+            sendBoard(gameCopy.pgn())
+            turn.current = false
+            console.log(turn.current)
+            if(result.captured){
+                captureSound.play()
+                socket.emit("sfx_capture", roomName)
+            }
+            else{
+                moveSound.play()
+                socket.emit("sfx_move", roomName)
+            }
+        }
+        
+        //console.log(gameCopy.pgn())
         return result;
     }
 
     
     function onDrop(sourceSquare, targetSquare) {//When moving a piece on the board
         if(game.turn() == 'w' && `${color.current}` == "white" || game.turn() == 'b' && `${color.current}` == "black"){
-            const res = makeAMove({
+            makeAMove({
                 from: sourceSquare,
                 to: targetSquare,
             });
-            if(res){
-                turn.current = false
-                console.log(turn.current)
-                if(res.captured){
-                    captureSound.play()
-                }
-                else{
-                    moveSound.play()
-                }
-            }
         }
     }
 
@@ -76,8 +77,8 @@ const Board = () =>{
             s = `${name}: `+s
             setChatLog(chatLog =>[...chatLog, s])
             socket.emit("send_chat", {message: s, room: roomName})
+            e.target.value = ""
         }
-        
     }
 
     useEffect(()=>{//Updating time
@@ -153,37 +154,45 @@ const Board = () =>{
         }
     }, [ game ]);
     useEffect(()=>{ //Getting data from opponent/server
-        socket.on("receive_move", (data)=>{
+        socket.on("receive_move", (data)=>{ //Receiving new board data
             const gameCopy = new Chess();
             gameCopy.loadPgn(data);
             setGame(gameCopy)
             turn.current = true
-            console.log("recieved")
+            //console.log("recieved")
+
         })
-        socket.on("receive_color", (col) =>{
+        socket.on("receive_color", (col) =>{ //Receive decided color, will be chosen at random and sent here
             color.current = col
             if(col == "white"){
                 turn.current = true
             }
         })
-        socket.on("get_opponent", (oppName) =>{
+        socket.on("get_opponent", (oppName) =>{ //Receive opponent name
             setOpponent(opponent => oppName)
+            setChatLog(chatLog =>[...chatLog, oppName+" has joined the room"])
         })
-        socket.on("receive_chat", (s)=>{
+        socket.on("receive_chat", (s)=>{ //Recieve chat
             setChatLog(chatLog =>[...chatLog, s])
         })
-        socket.on("receive_time", (t)=>{
+        socket.on("receive_time", (t)=>{ //Receive time, will be taken/sent every second to stop timers from getting out of sync
             setOppTime(t)
         })
-        socket.on("win_game", (col)=>{
+        socket.on("win_game", (col)=>{ //Only happens if game was won on time
             wonOnTime.current = true
-            console.log("Won on time")
+            //console.log("Won on time")
             if(col == "white"){
                 alert("Black won")
             }
             if(col == "black"){
                 alert("White won")
             }
+        })
+        socket.on("sfx_move", () =>{
+            moveSound.play()
+        })
+        socket.on("sfx_capture", () =>{
+            captureSound.play()
         })
     }, [socket])
 
@@ -230,11 +239,7 @@ const Board = () =>{
             </List>
                 <TextField label="Say something..." variant="outlined" sx = {{marginLeft: '0%', position: "absolute", bottom: 0, width: '100%'}} onKeyDown = {handleKeyDown} />
             </Box>
-            
         </div>
-        
-        
-        
     </>
   );
 }
