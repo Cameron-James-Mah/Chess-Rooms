@@ -61,6 +61,12 @@ io.on("connection", (socket)=>{
     socket.on("no_time", (data)=>{
         socket.to(data.room).emit("win_game", data.col)
     })
+    socket.on("sfx_move", (room)=>{
+        socket.to(room).emit("sfx_move")
+    })
+    socket.on("sfx_capture", (room)=>{
+        socket.to(room).emit("sfx_capture")
+    })
 })
 
 
