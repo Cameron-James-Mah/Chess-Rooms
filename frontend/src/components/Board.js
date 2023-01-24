@@ -197,6 +197,9 @@ const Board = () =>{
         socket.on("sfx_capture", () =>{
             captureSound.play()
         })
+        socket.on("check_reconnect", ()=>{
+            socket.emit("reconnect", roomName)
+        })
     }, [socket])
 
     return (
