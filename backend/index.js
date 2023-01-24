@@ -17,6 +17,7 @@ const io = new Server(server, {
 io.on("connection", (socket)=>{
     //socket.join("test");
     console.log(`User Connected: ${socket.id}`)
+    io.to(socket.id).emit("check_reconnect")
     //check to make sure size is not greater than 2
     socket.on("join_room", (roomName)=>{
         socket.join(roomName)
@@ -66,6 +67,9 @@ io.on("connection", (socket)=>{
     })
     socket.on("sfx_capture", (room)=>{
         socket.to(room).emit("sfx_capture")
+    })
+    socket.on("reconnect_room", (room)=>{
+        socket.join(room)
     })
 })
 
