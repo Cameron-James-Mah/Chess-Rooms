@@ -16,7 +16,7 @@ const io = new Server(server, {
 
 io.on("connection", (socket)=>{
     //socket.join("test");
-    //console.log(socket.id)
+    console.log(`User Connected: ${socket.id}`)
     //check to make sure size is not greater than 2
     socket.on("join_room", (roomName)=>{
         socket.join(roomName)
@@ -46,7 +46,7 @@ io.on("connection", (socket)=>{
         socket.broadcast.emit("receive_move", data)
     })
     socket.on("disconnect", () => {
-        //console.log(socket.id);    
+        console.log(`User disconnected: ${socket.id}`);    
     });
     socket.on("set_nickname", (myName) =>{
         socket.nickmame = myName

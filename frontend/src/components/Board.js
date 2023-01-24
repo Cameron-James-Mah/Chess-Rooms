@@ -137,6 +137,7 @@ const Board = () =>{
             room: roomName
         }
         socket.emit("send_time", data)
+        //console.log(myTime)
     }, [myTime])
     
 
@@ -178,7 +179,7 @@ const Board = () =>{
         })
         socket.on("receive_time", (t)=>{ //Receive time, will be taken/sent every second to stop timers from getting out of sync
             setOppTime(t)
-            console.log(t)
+            //console.log(t)
         })
         socket.on("win_game", (col)=>{ //Only happens if game was won on time
             wonOnTime.current = true
