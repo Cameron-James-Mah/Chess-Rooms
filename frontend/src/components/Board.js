@@ -5,9 +5,10 @@ import moveAudio from "../media/move-self.mp3"
 import captureAudio from "../media/capture.mp3"
 import { useLocation } from "react-router-dom";
 
-import { Typography, List, ListItemText, Box, TextField } from "@mui/material";
+import { Typography, List, ListItemText, Box, TextField, Grid } from "@mui/material";
 
 import io from 'socket.io-client'
+import { minHeight } from "@mui/system";
 
 //const socket = io.connect("http://localhost:3001")
 const socket = io.connect("https://chess-rooms-app.onrender.com")
@@ -177,6 +178,7 @@ const Board = () =>{
         })
         socket.on("receive_time", (t)=>{ //Receive time, will be taken/sent every second to stop timers from getting out of sync
             setOppTime(t)
+            console.log(t)
         })
         socket.on("win_game", (col)=>{ //Only happens if game was won on time
             wonOnTime.current = true
@@ -196,24 +198,23 @@ const Board = () =>{
         })
     }, [socket])
 
-    
-
-    
     return (
     <>
-        <Typography align="right" variant = "h4" marginRight={30}>Room: {roomName}</Typography>
-        <div style = {{marginTop: '1vw', display: 'flex', flexDirection: 'row'}}>
-            <div style = {{alignItems: 'center', marginLeft: '25%',justifyContent: 'center', width: '80vh', height: '100%'}}>
-            <div>
-                <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
+    <Typography align="right" variant = "h4" marginRight={30}>Room: {roomName}</Typography>
+    <Grid container columnSpacing = "7rem" direction="row"
+        alignItems="center"
+        justifyContent="center">
+        <Grid item>
+            <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
                     <Typography variant = "h4" align="left">{opponent}</Typography>
                 </div>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'right'}}>
                     <Typography variant = "h4" align="right">{oppTime}</Typography>
                 </div>
-            </div>
-            <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard" boardOrientation={color.current}/>
-            <div style = {{marginTop: '5vh'}}>
+                <div style={{width: '45rem'}}>
+                <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard" boardOrientation={color.current}/>
+                </div>
+                <div style = {{marginTop: '3rem'}}>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
                     <Typography variant = "h4" align="left">{name}</Typography>
                 </div>
@@ -221,27 +222,31 @@ const Board = () =>{
                     <Typography variant = "h4" align="right">{myTime}</Typography>
                 </div>
             </div>
-            </div>
-            <Box sx={{border: '1px solid grey', width: '20%', marginLeft: '5%', position: "relative", maxHeight: '70vh', marginTop: '5%'}}>
+        </Grid>   
+        <Grid item>
+            <Box sx={{border: '1px solid grey', height: "40rem", width: "30rem"}}>
                 <Typography variant = "h4" align="center">Chat</Typography>
             <List sx={{
-                width: '90%',
                 bgcolor: 'background.paper',
                 position: 'relative',
                 overflow: 'auto',
-                maxHeight: '55vh',
-                marginLeft: '10%'
+                maxHeight: '30rem',
+                marginLeft: '5rem',
+                minHeight: '30rem'
             }}>
                 {chatLog.map((elem)=>(
                     <ListItemText primary = {`${elem}`}/>
                 ))}
-
             </List>
-                <TextField label="Say something..." variant="outlined" sx = {{marginLeft: '0%', position: "absolute", bottom: 0, width: '100%'}} onKeyDown = {handleKeyDown} />
+                
             </Box>
-        </div>
+            <TextField label="Say something..." variant="outlined" sx = {{width: '30rem', bottom: 0}} onKeyDown = {handleKeyDown} />
+        </Grid>   
+    </Grid>
+        
     </>
   );
+    
 }
 
 export default Board;
