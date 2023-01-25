@@ -69,6 +69,7 @@ io.on("connection", (socket)=>{
         socket.to(room).emit("sfx_capture")
     })
     socket.on("reconnect_room", (room)=>{
+        console.log(`Reconnecting to room : ${room}`)
         socket.join(room)
     })
 })
