@@ -198,7 +198,7 @@ const Board = () =>{
             captureSound.play()
         })
         socket.on("check_reconnect", ()=>{
-            socket.emit("reconnect", roomName)
+            socket.emit("reconnect_room", roomName)
         })
     }, [socket])
 
