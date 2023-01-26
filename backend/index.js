@@ -17,10 +17,11 @@ const io = new Server(server, {
 io.on("connection", (socket)=>{
     //socket.join("test");
     console.log(`User Connected: ${socket.id}`)
-    io.to(socket.id).emit("check_reconnect")
+    io.to(socket.id).emit("check_reconnect") //If someone disconnects from socket and reconnects while in room
     //check to make sure size is not greater than 2
     socket.on("join_room", (roomName)=>{
         socket.join(roomName)
+        console.log(`User Connected: ${socket.id} connected to ${roomName}`)
         if(io.sockets.adapter.rooms.get(roomName) && io.sockets.adapter.rooms.get(roomName).size == 2){
             console.log("Starting game...")
             const clientsArray = Array.from(io.sockets.adapter.rooms.get(roomName)); //Array of socket ids in this room

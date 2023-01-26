@@ -3,12 +3,16 @@ import { useState, useEffect, useRef } from "react";
 import { Chess } from "chess.js";
 import moveAudio from "../media/move-self.mp3"
 import captureAudio from "../media/capture.mp3"
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
-import { Typography, List, ListItemText, Box, TextField, Grid } from "@mui/material";
+
+import { Typography, List, ListItemText, Box, TextField, Grid, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material";
 
 import io from 'socket.io-client'
 import { minHeight } from "@mui/system";
+
+
 
 //const socket = io.connect("http://localhost:3001")
 const socket = io.connect("https://chess-rooms-app.onrender.com")
@@ -26,8 +30,17 @@ const Board = () =>{
     const captureSound = new Audio(captureAudio);
     const [mySeconds, setMySeconds] = useState(600)
     const [myTime, setMyTime] = useState("")
-    const [oppTime, setOppTime] = useState("10:00")
-    const wonOnTime = useRef(false)
+    const [oppTime, setOppTime] = useState("Waiting for opponent...")
+    //const wonOnTime = useRef(false)
+    const [winner, setWinner] = useState("")
+    const gameOver = useRef(false)
+    const [open, setOpen] = useState(false);
+    const [postGameText, setPostGameText] = useState("")
+
+
+    const handleClose = () => {
+        setOpen(false);
+    };
 
     const sendBoard = (data) =>{ //Called everytime I make a valid move, I would like to just send the new move in the future 
         socket.emit("send_move", data)
@@ -84,7 +97,7 @@ const Board = () =>{
 
     useEffect(()=>{//Updating time
         const interval = setInterval(()=>{
-            if(turn.current){
+            if(turn.current && !gameOver.current){
                 //console.log(turn.current)
                 setMySeconds(mySeconds => mySeconds - 1)
             }
@@ -93,11 +106,12 @@ const Board = () =>{
         return () =>{
             clearInterval(interval)
         }
-    }, [color], [game])
+    }, [color])
 
     useEffect(()=>{
         socket.emit("set_nickname", name)
         joinRoom()
+        gameOver.current = false
     }, [])
 
     //Not sure why I couldn't put it after setMySeconds above...
@@ -122,12 +136,15 @@ const Board = () =>{
             }
             socket.emit("no_time", data)
             if(color.current == "white"){
-                alert("Black won")
+                //alert("Black won")
+                setWinner("b")
             }
             if(color.current == "black"){
-                alert("White won")
+                //alert("White won")
+                setWinner("w")
             }
-            wonOnTime.current = true
+            
+            //wonOnTime.current = true
         }
     },[mySeconds])
 
@@ -145,16 +162,41 @@ const Board = () =>{
         //console.log(1)
         if(game.isGameOver()){
             if(game.isStalemate() || game.isThreefoldRepetition() || game.isInsufficientMaterial()){
-                alert("Stalemate");
+                //alert("Stalemate");
+                setWinner("s")
             } 
             if(game.turn() == "b"){
-                alert("White won");
+                //alert("White won");
+                setWinner("w")
             }
             else if(game.turn() == "w"){
-                alert("Black won");
+                //alert("Black won");
+                setWinner("b")
             }
         }
     }, [ game ]);
+
+    useEffect(()=>{//Handle end of game
+        if(winner == "s"){
+            setOpen(true);
+            gameOver.current = true
+            setPostGameText("Stalemate")
+            //alert("Stalemate...")
+        }
+        else if(winner == "w"){
+            setOpen(true);
+            gameOver.current = true
+            setPostGameText("White Won")
+            //alert("White won...")
+        }
+        else if(winner == "b"){
+            setOpen(true);
+            gameOver.current = true
+            setPostGameText("Black Won")
+            //alert("Black won...")
+        }
+        
+    }, [winner])
     useEffect(()=>{ //Getting data from opponent/server
         socket.on("receive_move", (data)=>{ //Receiving new board data
             const gameCopy = new Chess();
@@ -182,13 +224,12 @@ const Board = () =>{
             //console.log(t)
         })
         socket.on("win_game", (col)=>{ //Only happens if game was won on time
-            wonOnTime.current = true
             //console.log("Won on time")
             if(col == "white"){
-                alert("Black won")
+                setWinner("b")
             }
             if(col == "black"){
-                alert("White won")
+                setWinner("w")
             }
         })
         socket.on("sfx_move", () =>{
@@ -205,7 +246,7 @@ const Board = () =>{
     return (
     <>
     <Typography align="right" variant = "h4" marginRight={30}>Room: {roomName}</Typography>
-    <Grid container columnSpacing = "7rem" direction="row"
+    <Grid container columnSpacing = "7em" direction="row"
         alignItems="center"
         justifyContent="center">
         <Grid item>
@@ -215,10 +256,10 @@ const Board = () =>{
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'right'}}>
                     <Typography variant = "h4" align="right">{oppTime}</Typography>
                 </div>
-                <div style={{width: '45rem'}}>
+                <div style={{width: '45em'}}>
                 <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard" boardOrientation={color.current}/>
                 </div>
-                <div style = {{marginTop: '3rem'}}>
+                <div style = {{marginTop: '3em'}}>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
                     <Typography variant = "h4" align="left">{name}</Typography>
                 </div>
@@ -228,15 +269,15 @@ const Board = () =>{
             </div>
         </Grid>   
         <Grid item>
-            <Box sx={{border: '1px solid grey', height: "40rem", width: "30rem"}}>
+            <Box sx={{border: '1px solid grey', height: "40em", width: "30em"}}>
                 <Typography variant = "h4" align="center">Chat</Typography>
             <List sx={{
                 bgcolor: 'background.paper',
                 position: 'relative',
                 overflow: 'auto',
-                maxHeight: '30rem',
-                marginLeft: '5rem',
-                minHeight: '30rem'
+                maxHeight: '30em',
+                marginLeft: '5em',
+                minHeight: '30em'
             }}>
                 {chatLog.map((elem)=>(
                     <ListItemText primary = {`${elem}`}/>
@@ -244,10 +285,26 @@ const Board = () =>{
             </List>
                 
             </Box>
-            <TextField label="Say something..." variant="outlined" sx = {{width: '30rem', bottom: 0}} onKeyDown = {handleKeyDown} />
+            <TextField label="Say something..." variant="outlined" sx = {{width: '30em', bottom: 0}} onKeyDown = {handleKeyDown} />
         </Grid>   
     </Grid>
-        
+        <Dialog
+        open={open}
+      >
+        <DialogTitle id="responsive-dialog-title" textAlign={"center"}>
+          {postGameText}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {"Close me to return home..."}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions style={{justifyContent: "center"}}>
+          <Button autoFocus component = {Link} to = "/" >
+            Return Home
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
     
