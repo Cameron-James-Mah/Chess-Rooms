@@ -8,7 +8,7 @@ import io from 'socket.io-client'
 
 //const socket = io.connect("http://localhost:3001")
 
-const Home = ({user, displayName}) =>{
+const Home = ({user, displayName, setInGame}) =>{
     const [room, setRoom] = useState("");
     const [username, setUserName] = useState("")
     
@@ -24,6 +24,10 @@ const Home = ({user, displayName}) =>{
     useEffect(()=>{
         setUserName(displayName)
     },[displayName])
+
+    useEffect(()=>{
+        setInGame(false)
+    })
     
     
     if(user){

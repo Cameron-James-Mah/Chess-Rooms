@@ -18,7 +18,7 @@ import Axios from "axios"
 const socket = io.connect(process.env.REACT_APP_SERVER_URL)
 //const socket = io.connect("https://chess-rooms-app.onrender.com")
 
-const Board = ({user}) =>{
+const Board = ({user, setInGame}) =>{
     const [chatLog, setChatLog] = useState([])
     const [game, setGame] = useState(new Chess());
     const turn = useRef(false)
@@ -115,6 +115,7 @@ const Board = ({user}) =>{
         socket.emit("set_nickname", name)
         joinRoom()
         gameOver.current = false
+        setInGame(true)
     }, [])
 
     useEffect(()=>{//Updating time
