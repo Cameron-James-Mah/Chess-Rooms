@@ -79,11 +79,17 @@ const Board = ({user, setInGame}) =>{
     
     function onDrop(sourceSquare, targetSquare) {//When moving a piece on the board
         if(game.turn() == 'w' && `${color.current}` == "white" || game.turn() == 'b' && `${color.current}` == "black"){
-            makeAMove({
+            const try1 = makeAMove({
                 from: sourceSquare,
                 to: targetSquare,
                 promotion: "q"
             });
+            if(!try1){
+                makeAMove({
+                    from: sourceSquare,
+                    to: targetSquare,
+            });
+            }
         }
     }
 
