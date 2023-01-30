@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-import { Box, List, ListItem, ListItemText, Grid, Typography } from "@mui/material";
+import { Box, List, ListItem, ListItemText, Grid, Typography, Button } from "@mui/material";
 
 import Axios from "axios";
 
@@ -22,6 +22,17 @@ const Profile = ({user, displayName}) =>{
         }
       })
     }
+
+    const downloadTxtFile = (e) => {
+    const element = document.createElement("a");
+    const file = new Blob([e.target.value], {
+      type: "text/plain"
+    });
+    element.href = URL.createObjectURL(file);
+    element.download = "Game.txt";
+    document.body.appendChild(element);
+    element.click();
+  };
 
     useEffect(()=>{
         //console.log("Getting games for "+user)
@@ -59,7 +70,7 @@ const Profile = ({user, displayName}) =>{
               <li>
                 <ul>
               <ListItem key={i}>
-                  <ListItemText primary={`${elem}`} />
+                  <Button value = {`${elem}`} onClick = {downloadTxtFile}>{i}. Game</Button>
               </ListItem>
               </ul>
               </li>

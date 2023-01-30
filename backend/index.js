@@ -48,6 +48,7 @@ app.post("/loginUser", async (req, res)=>{
     const temp = await UserModel.findOne({ Username: req.body.Username });
     if(temp && temp.Password == req.body.Password){
         res.json(temp)
+        console.log(req.body.Username+" has logged in")
     }
     else{
         res.json(temp)
@@ -63,6 +64,7 @@ app.post("/createUser", async (req, res)=>{
         const newUser = new UserModel(user)
         await newUser.save()
         res.json(user)
+        console.log(req.body.Username+" has registered")
     }
     else{
         res.json(null)

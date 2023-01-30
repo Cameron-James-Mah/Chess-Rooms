@@ -12,14 +12,15 @@ import { useState, useEffect } from 'react';
 const App = () =>{
     const [loggedUser, setLoggedUser] = useState("")
     const [loggedDisplay, setLoggedDisplay] = useState("")
+    const [inGame, setInGame] = useState(false)
     
     return(
         <>
         <div>
-            <Menubar setLoggedUser={setLoggedUser} setLoggedDisplay = {setLoggedDisplay}/>
+            <Menubar setLoggedUser={setLoggedUser} setLoggedDisplay = {setLoggedDisplay} inGame = {inGame}/>
             <Routes>
-                <Route path = "/" element={<Home user = {loggedUser} displayName = {loggedDisplay}/>}></Route>
-                <Route path = "/Board" element={<Board user = {loggedUser}/>}></Route>
+                <Route path = "/" element={<Home user = {loggedUser} displayName = {loggedDisplay} setInGame = {setInGame}/>} ></Route>
+                <Route path = "/Board" element={<Board user = {loggedUser} setInGame = {setInGame}/>} ></Route>
                 <Route path = "/Profile" element={<Profile user = {loggedUser} displayName = {loggedDisplay}/>}></Route>
             </Routes>
             </div>

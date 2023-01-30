@@ -5,13 +5,14 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import AccountCircle from '@mui/icons-material/AccountCircle';
+import HomeIcon from '@mui/icons-material/Home';
 import {Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery, TextField, Menu, MenuItem} from "@mui/material"
 import { CssBaseline } from '@mui/material';
 import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Axios from "axios"
 
-const Menubar = ({setLoggedUser, setLoggedDisplay}) =>{
+const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
     const [open, setOpen] = useState(false)//MUI display component state
     //Textbox fields
     const [user, setUser] = useState("")
@@ -128,8 +129,14 @@ const Menubar = ({setLoggedUser, setLoggedDisplay}) =>{
       //console.log(loggedIn.current)
       
     }, [])
-
-    if(!loggedIn.current){
+    if(inGame)
+    {
+      return(
+        <>
+        </>
+      )
+    }
+    else if(!loggedIn.current){
         return (
         <>
         <CssBaseline/>
@@ -137,6 +144,11 @@ const Menubar = ({setLoggedUser, setLoggedDisplay}) =>{
         <Toolbar>
             <Box display='flex' flexGrow={1}>
             {/* left side */}
+            <IconButton
+            aria-label = "Home icon" size = "medium" component = {Link} to = "/" color='inherit'
+          >
+            <HomeIcon/>
+          </IconButton>
             </Box>
           <Button color="inherit" onClick={handleLogin}>Login</Button>
           <Button color="inherit" onClick={handleRegister}>Register</Button>
