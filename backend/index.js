@@ -4,7 +4,86 @@ const http = require('http')
 const { Server } = require('socket.io')
 const cors = require('cors')
 app.use(cors())
-const server = http.createServer(app)
+//const server = http.createServer(app)
+
+const mongoose = require("mongoose")
+const UserModel = require("./models/Users")
+
+app.use(express.json())
+
+const dotenv = require("dotenv");
+
+dotenv.config();
+
+mongoose.connect(process.env.MONGODB_CHESSROOMS_URI)
+
+const server = app.listen(3001, () =>{
+    console.log("Server is running")
+})
+
+//Test request
+app.get("/getUsers", (req, res) =>{
+    UserModel.find({}, (err, result) =>{
+        if(err){
+            res.json(err)
+        }
+        else{
+            res.json(result)
+        }
+    })
+})
+
+app.post("/getUserGames", async (req, res)=>{
+    const temp = await UserModel.findOne({ Username: req.body.Username });
+    if(temp){
+        res.json(temp.Games)
+    }
+    else{
+        res.json(null)
+    }
+})
+
+//Validate login
+app.post("/loginUser", async (req, res)=>{
+    const temp = await UserModel.findOne({ Username: req.body.Username });
+    if(temp && temp.Password == req.body.Password){
+        res.json(temp)
+    }
+    else{
+        res.json(temp)
+    }
+
+})
+
+//Create a new user account
+app.post("/createUser", async (req, res)=>{
+    const temp = await UserModel.findOne({ Username: req.body.Username });
+    if(!temp){
+        const user = req.body
+        const newUser = new UserModel(user)
+        await newUser.save()
+        res.json(user)
+    }
+    else{
+        res.json(null)
+    } 
+})
+
+//Add completed game to database
+app.post("/saveGame", async (req, res)=>{
+    const temp = await UserModel.findOne({ Username: req.body.Username });//Get my database entry by username
+    if(temp){
+        console.log("Adding game: " + req.body.PGN)
+        temp.Games.push(req.body.PGN)
+        await temp.save()
+    }
+    else{
+        console.log("Could not find user to add game to")
+    }
+})
+
+
+
 
 const io = new Server(server, {
     cors:{
@@ -14,6 +93,9 @@ const io = new Server(server, {
 })
 
 
+
+
+//Socket io, handles communication between boards
 io.on("connection", (socket)=>{
     //socket.join("test");
     console.log(`User Connected: ${socket.id}`)
@@ -21,16 +103,16 @@ io.on("connection", (socket)=>{
     //check to make sure size is not greater than 2
     socket.on("join_room", (roomName)=>{
         socket.join(roomName)
-        console.log(`User Connected: ${socket.id} connected to ${roomName}`)
+        console.log(`User Connected: ${socket.id} connected to room: ${roomName}`)
         if(io.sockets.adapter.rooms.get(roomName) && io.sockets.adapter.rooms.get(roomName).size == 2){
-            console.log("Starting game...")
+            console.log(`Starting game in room: ${roomName}`)
             const clientsArray = Array.from(io.sockets.adapter.rooms.get(roomName)); //Array of socket ids in this room
             /*
             for (let clientID of clients ) {
                 console.log(clientID)
                 io.to(clientID).emit("recieve_color", `${clientID}`)
             }*/
-            //11 26 97
+            //112697
             //CHange this later to be desired color
             io.to(clientsArray[0]).emit("receive_color", "white")
             let nick = io.sockets.sockets.get(clientsArray[1]).nickmame;
@@ -78,6 +160,3 @@ io.on("connection", (socket)=>{
 
 
 
-server.listen(3001, () =>{
-    console.log("Server is running")
-})

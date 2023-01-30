@@ -7,17 +7,18 @@ import { useLocation, Link } from "react-router-dom";
 
 
 import { Typography, List, ListItemText, Box, TextField, Grid, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material";
+
 
 import io from 'socket.io-client'
-import { minHeight } from "@mui/system";
+
+import Axios from "axios"
 
 
 
-//const socket = io.connect("http://localhost:3001")
-const socket = io.connect("https://chess-rooms-app.onrender.com")
+const socket = io.connect(process.env.REACT_APP_SERVER_URL)
+//const socket = io.connect("https://chess-rooms-app.onrender.com")
 
-const Board = () =>{
+const Board = ({user}) =>{
     const [chatLog, setChatLog] = useState([])
     const [game, setGame] = useState(new Chess());
     const turn = useRef(false)
@@ -28,7 +29,7 @@ const Board = () =>{
     const color = useRef("")
     const moveSound = new Audio(moveAudio);
     const captureSound = new Audio(captureAudio);
-    const [mySeconds, setMySeconds] = useState(600)
+    const [mySeconds, setMySeconds] = useState(900)
     const [myTime, setMyTime] = useState("")
     const [oppTime, setOppTime] = useState("Waiting for opponent...")
     //const wonOnTime = useRef(false)
@@ -60,7 +61,7 @@ const Board = () =>{
             setGame(gameCopy); 
             sendBoard(gameCopy.pgn())
             turn.current = false
-            console.log(turn.current)
+            //console.log(turn.current)
             if(result.captured){
                 captureSound.play()
                 socket.emit("sfx_capture", roomName)
@@ -81,6 +82,7 @@ const Board = () =>{
             makeAMove({
                 from: sourceSquare,
                 to: targetSquare,
+                promotion: "q"
             });
         }
     }
@@ -95,6 +97,26 @@ const Board = () =>{
         }
     }
 
+
+    //Post request to add game to database
+    const savePGN = () =>{
+      Axios.post(`${process.env.REACT_APP_SERVER_URL}/saveGame`, //Change this later to be url for render server
+      {
+        Username: user,
+        PGN: game.pgn()
+      }).then((response)=>{
+        //console.log("Saved game: " + game.pgn())
+      })
+    }
+
+
+
+    useEffect(()=>{
+        socket.emit("set_nickname", name)
+        joinRoom()
+        gameOver.current = false
+    }, [])
+
     useEffect(()=>{//Updating time
         const interval = setInterval(()=>{
             if(turn.current && !gameOver.current){
@@ -108,11 +130,6 @@ const Board = () =>{
         }
     }, [color])
 
-    useEffect(()=>{
-        socket.emit("set_nickname", name)
-        joinRoom()
-        gameOver.current = false
-    }, [])
 
     //Not sure why I couldn't put it after setMySeconds above...
     useEffect(()=>{
@@ -195,7 +212,13 @@ const Board = () =>{
             setPostGameText("Black Won")
             //alert("Black won...")
         }
-        
+        if(user && winner == "b" || user && winner == "w"){//useffect fires off on render, dont want to save empty games, only completed games
+            //console.log(user + " won")
+            savePGN()
+        }
+        else{
+            //console.log("Guest won")
+        }
     }, [winner])
     useEffect(()=>{ //Getting data from opponent/server
         socket.on("receive_move", (data)=>{ //Receiving new board data
