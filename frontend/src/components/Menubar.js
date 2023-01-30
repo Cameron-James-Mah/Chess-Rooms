@@ -195,6 +195,11 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
         <Toolbar>
             <Box display='flex' flexGrow={1}>
             {/* left side */}
+            <IconButton
+            aria-label = "Home icon" size = "medium" component = {Link} to = "/" color='inherit'
+          >
+            <HomeIcon/>
+          </IconButton>
             </Box>
             <div>
           <IconButton
