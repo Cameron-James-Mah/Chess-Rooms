@@ -77,11 +77,47 @@ app.post("/saveGame", async (req, res)=>{
     if(temp){
         console.log("Adding game: " + req.body.PGN)
         temp.Games.push(req.body.PGN)
+        if(req.body.result == "draw"){
+            if(!temp.Draws){
+                temp.Draws = 0
+            }
+            temp.Draws = temp.Draws+1 
+        }
+        else if(req.body.result == "win"){
+            if(!temp.Wins){
+                temp.Wins = 0
+            }
+            temp.Wins = temp.Wins+1
+        }
+        else if(req.body.result == "loss"){
+            if(!temp.Losses){
+                temp.Losses = 0
+            }
+            temp.Losses = temp.Losses+1
+        }
         await temp.save()
     }
     else{
         console.log("Could not find user to add game to")
     }
+})
+
+app.post("/getUserRecord", async(req, res)=>{ //For getting wins losses draws by username
+    const temp = await UserModel.findOne({ Username: req.body.Username });
+    if(!temp.Wins){
+        temp.Wins = 0
+    }
+    if(!temp.Losses){
+        temp.Losses = 0
+    }
+    if(!temp.Draws){
+        temp.Draws = 0
+    }
+    res.json(
+        {Wins: temp.Wins,
+        Losses: temp.Losses,
+        Draws: temp.Draws
+    })
 })
 
 

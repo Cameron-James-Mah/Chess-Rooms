@@ -16,9 +16,25 @@ const UserSchema = new mongoose.Schema({
     Games: [{
         type: String,
         require: false
-    }]
+    }],
+    Wins:{
+        type: Number,
+        require: false
+    },
+    Losses:{
+        type: Number,
+        require: false
+    },
+    Rating:{//Everyone start with base rating of 1200
+        type: Number,
+        require: true
+    },
+    Draws:{
+        type: Number,
+        require: false
+    }
 
-    //Add games and elo after this works
+    
 })
 
 const UserModel = mongoose.model("users", UserSchema)

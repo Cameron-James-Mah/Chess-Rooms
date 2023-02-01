@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 
-import { Box, List, ListItem, ListItemText, Grid, Typography, Button } from "@mui/material";
+import { Box, List, ListItem, ListItemText, Grid, Typography, Button, ListItemButton } from "@mui/material";
 
 import Axios from "axios";
 
 const Profile = ({user, displayName}) =>{
 
     const [games, setGames] = useState([""])
+    const [record, setRecord] = useState("")
 
     const getGames = () =>{
         Axios.post(`${process.env.REACT_APP_SERVER_URL}/getUserGames`,
@@ -20,6 +21,14 @@ const Profile = ({user, displayName}) =>{
         else{
           
         }
+      })
+    }
+    const getRecord = () =>{
+      Axios.post(`${process.env.REACT_APP_SERVER_URL}/getUserRecord`,{
+        Username: user
+      }).then((response)=>{
+        setRecord(`${response.data.Wins} Wins/${response.data.Losses} Losses/${response.data.Draws} Draws`)
+        
       })
     }
 
@@ -37,6 +46,7 @@ const Profile = ({user, displayName}) =>{
     useEffect(()=>{
         //console.log("Getting games for "+user)
         getGames()
+        getRecord()
     },[])
 
     return(
@@ -50,22 +60,19 @@ const Profile = ({user, displayName}) =>{
             <Typography variant = "h5">Display Name: {displayName}</Typography>
             <Typography variant = "h5">Username: {user}</Typography>
             <Typography variant = "h5">Rating: </Typography>
-            <Typography variant = "h5">Record: </Typography>
-          </Grid>
-          </Box>
-          <Grid item>
+            <Typography variant = "h5">Record: {record}</Typography>
             <List
             sx={{
               width: '100%',
-              maxWidth: 360,
+      
               bgcolor: 'background.paper',
               position: 'relative',
               overflow: 'auto',
               maxHeight: 300,
-              '& ul': { padding: 0 },
+            
             }}
           >
-            <Typography variant = "h5">Completed Games</Typography>
+            <Typography variant = "h5">Recent Games:</Typography>
             {games.map((elem, i)=>
               <li>
                 <ul>
@@ -76,7 +83,9 @@ const Profile = ({user, displayName}) =>{
               </li>
             )}
           </List>
-        </Grid>
+          </Grid>
+          </Box>
+          
 
         </Grid>  
         </>
