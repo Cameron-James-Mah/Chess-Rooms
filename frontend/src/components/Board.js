@@ -105,10 +105,11 @@ const Board = ({user, setInGame}) =>{
 
 
     //Post request to add game to database
-    const savePGN = () =>{
+    const savePGN = (result) =>{
       Axios.post(`${process.env.REACT_APP_SERVER_URL}/saveGame`, //Change this later to be url for render server
       {
         Username: user,
+        result,
         PGN: game.pgn()
       }).then((response)=>{
         //console.log("Saved game: " + game.pgn())
@@ -188,8 +189,9 @@ const Board = ({user, setInGame}) =>{
             if(game.isStalemate() || game.isThreefoldRepetition() || game.isInsufficientMaterial()){
                 //alert("Stalemate");
                 setWinner("s")
+                
             } 
-            if(game.turn() == "b"){
+            else if(game.turn() == "b"){
                 //alert("White won");
                 setWinner("w")
             }
@@ -201,31 +203,46 @@ const Board = ({user, setInGame}) =>{
     }, [ game ]);
 
     useEffect(()=>{//Handle end of game
+        console.log(winner)
         if(winner == "s"){
             setOpen(true);
             gameOver.current = true
             setPostGameText("Stalemate")
+            savePGN("draw")
             //alert("Stalemate...")
         }
         else if(winner == "w"){
             setOpen(true);
             gameOver.current = true
             setPostGameText("White Won")
+            if(color.current == "white"){
+                savePGN("win")
+            }
+            else{
+                savePGN("loss")
+            }
             //alert("White won...")
         }
         else if(winner == "b"){
             setOpen(true);
             gameOver.current = true
             setPostGameText("Black Won")
+            if(color.current == "black"){
+                savePGN("win")
+            }
+            else{
+                savePGN("loss")
+            }
             //alert("Black won...")
         }
+        /*
         if(user && winner == "b" || user && winner == "w"){//useffect fires off on render, dont want to save empty games, only completed games
             //console.log(user + " won")
             savePGN()
         }
         else{
             //console.log("Guest won")
-        }
+        }*/
     }, [winner])
     useEffect(()=>{ //Getting data from opponent/server
         socket.on("receive_move", (data)=>{ //Receiving new board data
@@ -278,8 +295,11 @@ const Board = ({user, setInGame}) =>{
     <Typography align="right" variant = "h4" marginRight={30}>Room: {roomName}</Typography>
     <Grid container columnSpacing = "7em" direction="row"
         alignItems="center"
-        justifyContent="center">
-        <Grid item>
+        justifyContent="center"
+        sx = {{maxHeight: '100%',
+                maxWidth: '100%',}}>
+        <Grid item sx = {{maxHeight: '100%',
+                maxWidth: '100%',}}>
             <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
                     <Typography variant = "h4" align="left">{opponent}</Typography>
                 </div>
@@ -287,7 +307,7 @@ const Board = ({user, setInGame}) =>{
                     <Typography variant = "h4" align="right">{oppTime}</Typography>
                 </div>
                 <div style={{width: '45em'}}>
-                <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard" boardOrientation={color.current}/>
+                <Chessboard position={game.fen()} onPieceDrop={onDrop} id="BasicBoard" boardOrientation={color.current} />
                 </div>
                 <div style = {{marginTop: '3em'}}>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
@@ -306,6 +326,7 @@ const Board = ({user, setInGame}) =>{
                 position: 'relative',
                 overflow: 'auto',
                 maxHeight: '30em',
+                maxWidth: '30em',
                 marginLeft: '5em',
                 minHeight: '30em'
             }}>

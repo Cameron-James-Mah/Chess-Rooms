@@ -91,7 +91,11 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
       {
         Username: user,
         Password: pass,
-        DisplayName: displayName
+        DisplayName: displayName,
+        Rating: 1200,
+        Wins: 0,
+        Losses: 0,
+        Draws: 0
       }).then((response)=>{ 
         //console.log(response)
         if(!response.data){//Response.data contains the new account info if valid, and NULL if not
