@@ -9,7 +9,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import {Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery, TextField, Menu, MenuItem} from "@mui/material"
 import { CssBaseline } from '@mui/material';
 import { useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Axios from "axios"
 
 const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
@@ -19,27 +19,49 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
     const [pass, setPass] = useState("")
     const [displayName, setDisplayName] = useState("")
 
-    const [registerErr, setRegisterErr] = useState(false) //Track whether user attempted to register with valid username
+    //Track if fields are valid, used in register fields
+    const [userErr, setUserErr] = useState(false) //Track whether user attempted to register with valid username
+    const [displayNameErr, setDisplayNameErr] = useState(false)
+    const [passwordErr, setPasswordErr] = useState(false)
+
     const [userLbl, setUserLbl] = useState("Username")
-    const [anchorEl, setAnchorEl] = useState(null);
+    const [displayLbl, setDisplayLbl] = useState("Display Name")
+    const [passLbl, setPassLbl] = useState("Password")
+
+
+    const [anchorEl, setAnchorEl] = useState(null)
     const loggedIn = useRef(false)
     const loggedUser = useRef("")
+
+    const navigate = useNavigate() //using this hook to navigate to other components going to be used for entering rooms
     
 
     const [action, setAction] = useState("Login") //Tracks if the user is trying to login or register
 
     /*Menubar actions*/
+
+    //Reset variables related to textfields when closing dialog/modal
     function handleClose(){
         setOpen(false);
-        setRegisterErr(false)
+
+        //Reset all variables related to textfields
+        setUserErr(false)
+        setPasswordErr(false)
+        setDisplayNameErr(false)
         setUserLbl("Username")
+        setPassLbl("Password")
+        setDisplayLbl("Display name")
+        setUser("")
+        setPass("")
+        setDisplayName("")
     }
 
     function handleLogin(){//Update the action selected on the menubar
       setAction("Login")
       setOpen(true);
     };
-    function handleRegister(){//Update the action selected on the menubar
+    function handleRegister(e){//Update the action selected on the menubar
+      //console.log(e.target.value)
       setAction("Register")
       setOpen(true);
     };
@@ -49,11 +71,33 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
           loginUser()
         }
         else if(action == "Register"){
-          createUser()
+          if(user.length >= 3 && user.length <= 10){
+            setUserLbl("Username")
+            setUserErr(false)
+            if(pass.length >= 3 && pass.length <= 10){
+              setPassLbl("Password")
+              setPasswordErr(false)
+              if(displayName.length >= 3 && displayName.length <= 8){
+                setDisplayLbl("Display name")
+                setDisplayNameErr(false)
+                //console.log(user.length+" "+pass.length+" "+displayName.length)
+                createUser()
+              }
+              else{
+                setDisplayNameErr(true)
+                setDisplayLbl("Must be between 3-10 characters")
+              }
+            }
+            else{
+              setPasswordErr(true)
+              setPassLbl("Must be between 3-10 characters")
+            }
+          }
+          else{
+            setUserErr(true)
+            setUserLbl("Must be between 3-10 characters")
+          }
         }
-        else{
-          console.log("no action error")
-        } 
     }
 
     function profileMenuClose(){
@@ -99,7 +143,7 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
       }).then((response)=>{ 
         //console.log(response)
         if(!response.data){//Response.data contains the new account info if valid, and NULL if not
-          setRegisterErr(true)
+          setUserErr(true)
           setUserLbl("Username not available")
         }
         else{
@@ -123,7 +167,7 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
           
         }
         else{
-          setRegisterErr(true)
+          setUserErr(true)
           setUserLbl("Incorrect login info")
         }
       })
@@ -169,13 +213,13 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
             <Typography>NOTE: users must be logged in to save games</Typography> 
           </DialogContentText>
           <DialogContentText>
-            <TextField label="Display Name" variant="filled" onChange={displayNameText} disabled = {action == "Login"}/>
+            <TextField label={displayLbl} variant="filled" onChange={displayNameText} disabled = {action == "Login"} error = {displayNameErr}/>
           </DialogContentText>
           <DialogContentText>
-            <TextField label={userLbl} variant="filled" style={{marginTop: 12}} onChange={userText} error = {registerErr}/>
+            <TextField label={userLbl} variant="filled" style={{marginTop: 12}} onChange={userText} error = {userErr}/>
           </DialogContentText>
           <DialogContentText>
-            <TextField label="Password" variant="filled" style={{marginTop: 12}} onChange={passText}/>
+            <TextField label={passLbl} variant="filled" style={{marginTop: 12}} onChange={passText} error = {passwordErr}/>
           </DialogContentText>
         </DialogContent>
         <DialogActions style={{justifyContent: "center"}}>

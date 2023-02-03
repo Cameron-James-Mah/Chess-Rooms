@@ -8,6 +8,8 @@ const Profile = ({user, displayName}) =>{
 
     const [games, setGames] = useState([""])
     const [record, setRecord] = useState("")
+    const [name, setName] = useState("")
+    const [username, setUserName] = useState("")
 
     const getGames = () =>{
         Axios.post(`${process.env.REACT_APP_SERVER_URL}/getUserGames`,
@@ -47,6 +49,8 @@ const Profile = ({user, displayName}) =>{
         //console.log("Getting games for "+user)
         getGames()
         getRecord()
+        setName(displayName)
+        setUserName(user)
     },[])
 
     return(
@@ -57,8 +61,8 @@ const Profile = ({user, displayName}) =>{
         justifyContent="center" marginTop={4}>
           <Box component="span" sx={{ p: 10, border: '1px solid grey' }}>
           <Grid item>
-            <Typography variant = "h5">Display Name: {displayName}</Typography>
-            <Typography variant = "h5">Username: {user}</Typography>
+            <Typography variant = "h5">Display Name: {name}</Typography>
+            <Typography variant = "h5">Username: {username}</Typography>
             <Typography variant = "h5">Rating: </Typography>
             <Typography variant = "h5">Record: {record}</Typography>
             <List
