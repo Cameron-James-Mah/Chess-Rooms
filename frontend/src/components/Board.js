@@ -7,18 +7,18 @@ import { useLocation, Link } from "react-router-dom";
 
 
 import { Typography, List, ListItemText, Box, TextField, Grid, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery } from "@mui/material";
-
+import Axios from "axios"
 
 import io from 'socket.io-client'
 
-import Axios from "axios"
 
 
 
-const socket = io.connect(process.env.REACT_APP_SERVER_URL)
+
+//const socket = io.connect(process.env.REACT_APP_SERVER_URL)
 //const socket = io.connect("https://chess-rooms-app.onrender.com")
 
-const Board = ({user, setInGame}) =>{
+const Board = ({user, setInGame, rating, socket, setRating}) =>{
     const [chatLog, setChatLog] = useState([])
     const [game, setGame] = useState(new Chess());
     const turn = useRef(false)
@@ -32,11 +32,13 @@ const Board = ({user, setInGame}) =>{
     const [mySeconds, setMySeconds] = useState(900)
     const [myTime, setMyTime] = useState("")
     const [oppTime, setOppTime] = useState("Waiting for opponent...")
+    const [oppRating, setOppRating] = useState(0)
     //const wonOnTime = useRef(false)
     const [winner, setWinner] = useState("")
     const gameOver = useRef(false)
     const [open, setOpen] = useState(false);
     const [postGameText, setPostGameText] = useState("")
+    
 
 
     const handleClose = () => {
@@ -44,7 +46,7 @@ const Board = ({user, setInGame}) =>{
     };
 
     const sendBoard = (data) =>{ //Called everytime I make a valid move, I would like to just send the new move in the future 
-        socket.emit("send_move", data)
+        socket.emit("send_move", {move: data, room: roomName})
     }
 
     const joinRoom = () =>{ //Called immediately on render
@@ -104,7 +106,7 @@ const Board = ({user, setInGame}) =>{
     }
 
 
-    //Post request to add game to database
+    //Save PGN to mondodb user and update elo rating
     const savePGN = (result) =>{
       Axios.post(`${process.env.REACT_APP_SERVER_URL}/saveGame`, //Change this later to be url for render server
       {
@@ -114,24 +116,69 @@ const Board = ({user, setInGame}) =>{
       }).then((response)=>{
         //console.log("Saved game: " + game.pgn())
       })
+      if(rating != "Unrated" && oppRating != "Unrated"){
+        let p1 = probability(oppRating, rating) //My probability of winning
+        let p2 = probability(rating, oppRating) //Opp probability of winning
+        let newRating = 0
+        let k = 30
+        rating = parseInt(rating)
+        setOppRating(parseInt(oppRating))
+        if(result == "win"){
+            newRating = rating + k * (1-p1) 
+        }
+        else if(result == "loss"){
+            newRating = rating+k*(0-p1)
+        }
+        else if(result == 'draw'){
+            if(rating > oppRating){
+                newRating = (rating+k*(0-p1))/2
+            }
+            else if(rating < oppRating){
+                newRating = (rating+k*(0-p1))/2
+            }
+        }
+        else{
+            console.log("Error win/loss/draw?")
+        }
+        newRating = Math.round(newRating)
+        setRating(newRating)
+        Axios.post(`${process.env.REACT_APP_SERVER_URL}/updateRating`,
+            {
+                Username: user,
+                newRating
+            }
+        ).then((response)=>{
+            //console.log(`New rating is ${newRating}`)
+        })
+
+      }
+      
     }
+
+    //Calculate probability, helper function to calculate updated ratings
+    function probability(rating1, rating2) {
+        return (
+            (1.0 * 1.0) / (1 + 1.0 * Math.pow(10, (1.0 * (rating1 - rating2)) / 400))
+        );
+    }   
 
 
 
     useEffect(()=>{
+        //name = `${name}(${rating})`
         socket.emit("set_nickname", name)
         joinRoom()
         gameOver.current = false
         setInGame(true)
     }, [])
 
-    useEffect(()=>{//Updating time
+    useEffect(()=>{//Updating time, gets called on game start 
         const interval = setInterval(()=>{
             if(turn.current && !gameOver.current){
                 //console.log(turn.current)
                 setMySeconds(mySeconds => mySeconds - 1)
             }
-            //onsole.log(game)
+            //console.log(game)
         }, 1000)
         return () =>{
             clearInterval(interval)
@@ -203,7 +250,7 @@ const Board = ({user, setInGame}) =>{
     }, [ game ]);
 
     useEffect(()=>{//Handle end of game
-        console.log(winner)
+        //console.log(winner)
         if(winner == "s"){
             setOpen(true);
             gameOver.current = true
@@ -288,6 +335,13 @@ const Board = ({user, setInGame}) =>{
         socket.on("check_reconnect", ()=>{
             socket.emit("reconnect_room", roomName)
         })
+        socket.on("send_opp_rating", () =>{
+            socket.emit("send_rating", {room: roomName, rating})
+        })
+        socket.on("get_opp_rating", (r)=>{
+            //console.log(123)
+            setOppRating(r)
+        })
     }, [socket])
 
     return (
@@ -301,7 +355,7 @@ const Board = ({user, setInGame}) =>{
         <Grid item sx = {{maxHeight: '100%',
                 maxWidth: '100%',}}>
             <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
-                    <Typography variant = "h4" align="left">{opponent}</Typography>
+                    <Typography variant = "h4" align="left">{opponent}({oppRating})</Typography>
                 </div>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'right'}}>
                     <Typography variant = "h4" align="right">{oppTime}</Typography>
@@ -311,7 +365,7 @@ const Board = ({user, setInGame}) =>{
                 </div>
                 <div style = {{marginTop: '3em'}}>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
-                    <Typography variant = "h4" align="left">{name}</Typography>
+                    <Typography variant = "h4" align="left">{name}({rating})</Typography>
                 </div>
                 <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'right'}}>
                     <Typography variant = "h4" align="right">{myTime}</Typography>
