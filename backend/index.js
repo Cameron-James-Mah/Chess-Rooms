@@ -33,8 +33,18 @@ app.get("/getUsers", (req, res) =>{
     })
 })
 
+app.post("/getUserRating", async(req, res)=>{
+    const temp = await UserModel.findOne({ Username: req.body.Username })
+    if(temp){
+        res.json(temp.Rating)
+    }
+    else{
+        res.json(err)
+    }
+})
+
 app.post("/getUserGames", async (req, res)=>{
-    const temp = await UserModel.findOne({ Username: req.body.Username });
+    const temp = await UserModel.findOne({ Username: req.body.Username })
     if(temp){
         res.json(temp.Games)
     }
@@ -45,20 +55,21 @@ app.post("/getUserGames", async (req, res)=>{
 
 //Validate login
 app.post("/loginUser", async (req, res)=>{
-    const temp = await UserModel.findOne({ Username: req.body.Username });
+    const temp = await UserModel.findOne({ Username: req.body.Username })
     if(temp && temp.Password == req.body.Password){
         res.json(temp)
         console.log(req.body.Username+" has logged in")
     }
     else{
-        res.json(temp)
+        console.log("Failed login")
+        res.json(null)
     }
 
 })
 
 //Create a new user account
 app.post("/createUser", async (req, res)=>{
-    const temp = await UserModel.findOne({ Username: req.body.Username });
+    const temp = await UserModel.findOne({ Username: req.body.Username })
     if(!temp){
         const user = req.body
         const newUser = new UserModel(user)
@@ -73,7 +84,7 @@ app.post("/createUser", async (req, res)=>{
 
 //Add completed game to database
 app.post("/saveGame", async (req, res)=>{
-    const temp = await UserModel.findOne({ Username: req.body.Username });//Get my database entry by username
+    const temp = await UserModel.findOne({ Username: req.body.Username })//Get my database entry by username
     if(temp){
         console.log("Adding game: " + req.body.PGN)
         temp.Games.push(req.body.PGN)
@@ -103,7 +114,7 @@ app.post("/saveGame", async (req, res)=>{
 })
 
 app.post("/getUserRecord", async(req, res)=>{ //For getting wins losses draws by username
-    const temp = await UserModel.findOne({ Username: req.body.Username });
+    const temp = await UserModel.findOne({ Username: req.body.Username })
     if(!temp.Wins){
         temp.Wins = 0
     }
@@ -118,6 +129,12 @@ app.post("/getUserRecord", async(req, res)=>{ //For getting wins losses draws by
         Losses: temp.Losses,
         Draws: temp.Draws
     })
+})
+
+app.post("/updateRating", async(req, res)=>{ //Update rating after game, I will validate whether both are registered users client side before doing this
+    const temp = await UserModel.findOne({ Username: req.body.Username })
+    temp.Rating = req.body.newRating
+    await temp.save()
 })
 
 
@@ -160,12 +177,16 @@ io.on("connection", (socket)=>{
             io.to(clientsArray[1]).emit("receive_color", "black")
             nick = io.sockets.sockets.get(clientsArray[0]).nickmame;
             io.to(clientsArray[1]).emit("get_opponent", nick)
+
+            io.to(clientsArray[0]).emit("send_opp_rating")
+            io.to(clientsArray[1]).emit("send_opp_rating")
         }
     })
     
     socket.on("send_move", (data)=>{//change this to specify room later
         //console.log(data)
-        socket.broadcast.emit("receive_move", data)
+        //socket.broadcast.emit("receive_move", data)
+        socket.to(data.room).emit("receive_move",data.move)
     })
     socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.id}`);    
@@ -192,6 +213,18 @@ io.on("connection", (socket)=>{
     socket.on("reconnect_room", (room)=>{
         console.log(`Reconnecting to room : ${room}`)
         socket.join(room)
+    })
+    socket.on("check_room_size", (room, socketID)=>{
+        //console.log(socket.id)
+        if(io.sockets.adapter.rooms.get(room) && io.sockets.adapter.rooms.get(room).size >= 2){
+            io.to(socket.id).emit("valid_room", false)
+        }
+        else{
+            io.to(socket.id).emit("valid_room",true)
+        }
+    })
+    socket.on("send_rating", (data)=>{
+        socket.to(data.room).emit("get_opp_rating", data.rating)
     })
 })
 

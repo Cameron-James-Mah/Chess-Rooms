@@ -12,7 +12,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Axios from "axios"
 
-const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
+const Menubar = ({setLoggedUser, setLoggedDisplay, inGame, setRating}) =>{
     const [open, setOpen] = useState(false)//MUI display component state
     //Textbox fields
     const [user, setUser] = useState("")
@@ -77,7 +77,7 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
             if(pass.length >= 3 && pass.length <= 10){
               setPassLbl("Password")
               setPasswordErr(false)
-              if(displayName.length >= 3 && displayName.length <= 8){
+              if(displayName.length >= 3 && displayName.length <= 10){
                 setDisplayLbl("Display name")
                 setDisplayNameErr(false)
                 //console.log(user.length+" "+pass.length+" "+displayName.length)
@@ -128,6 +128,7 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
       setLoggedUser("")
       setLoggedDisplay("")
       profileMenuClose()
+      setRating("Unrated")
     }
 
     const createUser = () =>{
@@ -159,12 +160,13 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame}) =>{
       }).then((response)=>{
         //console.log(response)
         if(response.data){
+          console.log(response.data.Rating)
           loggedUser.current = user
           loggedIn.current = true
           handleClose()
           setLoggedUser(user)
           setLoggedDisplay(response.data.DisplayName)
-          
+          setRating(response.data.Rating.toString())
         }
         else{
           setUserErr(true)

@@ -4,12 +4,14 @@ import { Box, List, ListItem, ListItemText, Grid, Typography, Button, ListItemBu
 
 import Axios from "axios";
 
-const Profile = ({user, displayName}) =>{
+const Profile = ({user, displayName, rating}) =>{
 
     const [games, setGames] = useState([""])
     const [record, setRecord] = useState("")
     const [name, setName] = useState("")
     const [username, setUserName] = useState("")
+    const [userRating, setUserRating] = useState(0)
+    
 
     const getGames = () =>{
         Axios.post(`${process.env.REACT_APP_SERVER_URL}/getUserGames`,
@@ -51,6 +53,8 @@ const Profile = ({user, displayName}) =>{
         getRecord()
         setName(displayName)
         setUserName(user)
+        setUserRating(rating)
+        console.log(rating)
     },[])
 
     return(
@@ -63,8 +67,9 @@ const Profile = ({user, displayName}) =>{
           <Grid item>
             <Typography variant = "h5">Display Name: {name}</Typography>
             <Typography variant = "h5">Username: {username}</Typography>
-            <Typography variant = "h5">Rating: </Typography>
+            <Typography variant = "h5">Rating: {userRating}</Typography>
             <Typography variant = "h5">Record: {record}</Typography>
+            <Typography variant = "h5">Recent Games:</Typography>
             <List
             sx={{
               width: '100%',
@@ -76,7 +81,7 @@ const Profile = ({user, displayName}) =>{
             
             }}
           >
-            <Typography variant = "h5">Recent Games:</Typography>
+            
             {games.map((elem, i)=>
               <li>
                 <ul>
