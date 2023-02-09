@@ -6,7 +6,7 @@ import captureAudio from "../media/capture.mp3"
 import { useLocation, Link } from "react-router-dom";
 
 
-import { Typography, List, ListItemText, Box, TextField, Grid, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery } from "@mui/material";
+import { Typography, List, ListItemText, Box, TextField, Grid, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, ListItem } from "@mui/material";
 import Axios from "axios"
 
 import io from 'socket.io-client'
@@ -51,7 +51,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
 
     const joinRoom = () =>{ //Called immediately on render
         socket.emit("join_room", roomName)
-        //console.log(`Joining room ${roomName}`)
+        console.log(`Joining room ${roomName}`)
     }
 
     
@@ -152,7 +152,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
         })
 
       }
-      
+      socket.emit("dc_from_room", roomName)
     }
 
     //Calculate probability, helper function to calculate updated ratings
@@ -351,7 +351,8 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
         alignItems="center"
         justifyContent="center"
         sx = {{maxHeight: '100%',
-                maxWidth: '100%',}}>
+                maxWidth: '100%',}}
+                >
         <Grid item sx = {{maxHeight: '100%',
                 maxWidth: '100%',}}>
             <div style = {{marginTop: '1vw', display: 'inline-block', flexDirection: 'row', float: 'left'}}>
@@ -378,17 +379,22 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
             <List sx={{
                 bgcolor: 'background.paper',
                 position: 'relative',
-                overflow: 'auto',
-                maxHeight: '30em',
-                maxWidth: '30em',
-                marginLeft: '5em',
-                minHeight: '30em'
+                overflowY: 'auto',
+                height: '90%',
+                maxWidth: '100%',
+                marginLeft: '4em',
+                textOverflow: "ellipsis"
             }}>
                 {chatLog.map((elem)=>(
-                    <ListItemText primary = {`${elem}`}/>
+                    <ListItem>
+                    <ListItemText
+                    style={{wordWrap: "break-word"}} 
+                    primary={`${elem}`} 
+                    primaryTypographyProps={{ style: { whiteSpace: "normal" } }} />
+                    </ListItem>
+
                 ))}
-            </List>
-                
+            </List>    
             </Box>
             <TextField label="Say something..." variant="outlined" sx = {{width: '30em', bottom: 0}} onKeyDown = {handleKeyDown} />
         </Grid>   

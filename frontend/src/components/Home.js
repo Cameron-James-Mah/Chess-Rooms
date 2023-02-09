@@ -1,4 +1,4 @@
-import {Typography, TextField, Button, List, ListItem, Box } from "@mui/material";
+import {Typography, TextField, Button, List, ListItem, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from "react";
 
@@ -7,27 +7,37 @@ import { useEffect, useRef, useState } from "react";
 
 
 const Home = ({user, displayName, setInGame, socket}) =>{
-    const [room, setRoom] = useState("");
-    const [username, setUserName] = useState("")
-    const [validRoom, setValidRoom] = useState(false)
+    //const [room, setRoom] = useState("");
+    //const [username, setUserName] = useState("")
+    const room = useRef("")
+    const username = useRef("")
+    //const [validRoom, setValidRoom] = useState(false)
+    const [pop1, setPop1] = useState(false) //Popup open for full room
+    const [openRooms, setOpenRooms] = useState({})
 
     const navigate = useNavigate() //using this hook to navigate to other components going to be used for entering rooms
     
+    function handleClose(){
+        setPop1(false)
+    }
     
     function updateRoom(e){
-        setRoom(e.target.value)
+        //setRoom(e.target.value)
+        room.current = e.target.value
     }
 
     function updateName(e){
-        setUserName(e.target.value)
+        //setUserName(e.target.value)
+        username.current = e.target.value
     }
     
     function joinBtn(){
-        socket.emit("check_room_size", room)
+        socket.emit("check_room_size", room.current)
     }
 
     useEffect(()=>{
-        setUserName(displayName)
+        //setUserName(displayName)
+        username.current = displayName
     },[displayName])
 
     useEffect(()=>{
@@ -36,16 +46,22 @@ const Home = ({user, displayName, setInGame, socket}) =>{
 
     useEffect(()=>{
         socket.on("valid_room", (valid)=>{
-            setValidRoom(valid)
+            if(valid){
+                navigate("/Board", {state: {roomName: room.current, name: username.current}})
+            }
+            else{
+                setPop1(true)
+            }
         })
     },[socket])
 
+    /*
     useEffect(()=>{
         //navigate to room
         if(validRoom){
             navigate("/Board", {state: {roomName: room, name: username}})
         }   
-    },[validRoom])
+    },[validRoom])*/
 
     
     
@@ -66,6 +82,18 @@ const Home = ({user, displayName, setInGame, socket}) =>{
             <div align = "center" style={{marginTop: 20}}>
                 <Button variant="outlined" onClick={joinBtn}>Enter</Button>
             </div>
+            <Dialog
+            open = {pop1}
+                >
+                    <DialogTitle id="responsive-dialog-title" textAlign={"center"}>
+                    {"Room is full"}
+                    </DialogTitle>
+                    <DialogActions style={{justifyContent: "center"}}>
+                    <Button onClick={handleClose}>
+                        Ok
+                    </Button>
+                    </DialogActions>
+                </Dialog>
         </>
     )
     }
@@ -86,6 +114,18 @@ const Home = ({user, displayName, setInGame, socket}) =>{
             <div align = "center" style={{marginTop: 20}}>
                 <Button variant="outlined" onClick={joinBtn} >Enter</Button>
             </div>
+            <Dialog
+            open = {pop1}
+                >
+                    <DialogTitle id="responsive-dialog-title" textAlign={"center"}>
+                    {"Room is full"}
+                    </DialogTitle>
+                    <DialogActions style={{justifyContent: "center"}}>
+                    <Button onClick={handleClose}>
+                        Ok
+                    </Button>
+                    </DialogActions>
+                </Dialog>
         </>
     )
     }

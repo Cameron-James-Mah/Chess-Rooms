@@ -226,6 +226,9 @@ io.on("connection", (socket)=>{
     socket.on("send_rating", (data)=>{
         socket.to(data.room).emit("get_opp_rating", data.rating)
     })
+    socket.on("dc_from_room", (room)=>{
+        socket.leave(room)
+    })
 })
 
 
