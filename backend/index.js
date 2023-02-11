@@ -148,6 +148,7 @@ const io = new Server(server, {
 })
 
 
+let currentRooms = new Set()
 
 
 //Socket io, handles communication between boards
@@ -155,11 +156,14 @@ io.on("connection", (socket)=>{
     //socket.join("test");
     console.log(`User Connected: ${socket.id}`)
     io.to(socket.id).emit("check_reconnect") //If someone disconnects from socket and reconnects while in room
+    //console.log(io.sockets.adapter.rooms)
+    //console.log(socket.rooms)
     //check to make sure size is not greater than 2
     socket.on("join_room", (roomName)=>{
         socket.join(roomName)
-        console.log(`User Connected: ${socket.id} connected to room: ${roomName}`)
+        //console.log(`User Connected: ${socket.id} connected to room: ${roomName}`)
         if(io.sockets.adapter.rooms.get(roomName) && io.sockets.adapter.rooms.get(roomName).size == 2){
+            currentRooms.add(roomName.toString())//Mark this room as in progress, in case someone disconnects midgame i dont want room to show as available
             console.log(`Starting game in room: ${roomName}`)
             const clientsArray = Array.from(io.sockets.adapter.rooms.get(roomName)); //Array of socket ids in this room
             /*
@@ -188,6 +192,16 @@ io.on("connection", (socket)=>{
         //socket.broadcast.emit("receive_move", data)
         socket.to(data.room).emit("receive_move",data.move)
     })
+    socket.on("disconnecting", () => {
+        //console.log(socket.rooms) 
+        for(const room of socket.rooms){
+            //console.log(room.toString())
+            io.to(room.toString()).emit("won_opp_quit")
+            if(io.sockets.adapter.rooms.get(room.toString()) && io.sockets.adapter.rooms.get(room.toString()).size == 1){//Last person in room, remove from set
+                currentRooms.delete(room.toString())
+            }
+        }
+    });
     socket.on("disconnect", () => {
         console.log(`User disconnected: ${socket.id}`);    
     });
@@ -198,10 +212,10 @@ io.on("connection", (socket)=>{
         //console.log(data)
         socket.to(data.room).emit("receive_chat", data.message)
     })
-    socket.on("send_time", (data)=>{
+    socket.on("send_time", (data)=>{ 
         socket.to(data.room).emit("receive_time", data.time)
     })
-    socket.on("no_time", (data)=>{
+    socket.on("no_time", (data)=>{ //Winning game on time
         socket.to(data.room).emit("win_game", data.col)
     })
     socket.on("sfx_move", (room)=>{
@@ -210,8 +224,8 @@ io.on("connection", (socket)=>{
     socket.on("sfx_capture", (room)=>{
         socket.to(room).emit("sfx_capture")
     })
-    socket.on("reconnect_room", (room)=>{
-        console.log(`Reconnecting to room : ${room}`)
+    socket.on("reconnect_room", (room)=>{ //If socket happens to disconnect, happens every 5 minutes on render free tier
+        console.log(`${socket.id} is reconnecting to room : ${room}`)
         socket.join(room)
     })
     socket.on("check_room_size", (room, socketID)=>{
@@ -226,9 +240,37 @@ io.on("connection", (socket)=>{
     socket.on("send_rating", (data)=>{
         socket.to(data.room).emit("get_opp_rating", data.rating)
     })
-    socket.on("dc_from_room", (room)=>{
+    socket.on("dc_from_room", (room)=>{//Game ended properly
         socket.leave(room)
+        currentRooms.delete(room) 
     })
+    socket.on("leave_rooms", ()=>{ //In case user goes back on the browser to return home, disconnect them from previous room
+        const rooms = io.sockets.adapter.sids.get(socket.id) //map of socket id to rooms in
+        for(const room of rooms){ 
+            if(room.toString().length <= 10){
+                socket.leave(room.toString())
+                socket.to(room.toString()).emit("won_opp_quit")
+                if(!io.sockets.adapter.rooms.get(room.toString())){
+                    currentRooms.delete(room.toString())
+                }
+            }
+        }
+    })
+    socket.on("get_all_rooms_data", ()=>{
+        const rooms = io.sockets.adapter.rooms
+        let roomsData = []
+        console.log(currentRooms)
+        for(const room of rooms){
+            if(room[0].toString().length <= 10 && room[1].size == 1 && !currentRooms.has(room[0].toString())){ //If user created room and only one person inside
+                //console.log(room[1])
+                roomsData.push(room[0].toString())
+                
+            }
+        }
+        
+        io.to(socket.id).emit("rooms_data", roomsData)
+    })
+    
 })
 
 

@@ -38,6 +38,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
     const gameOver = useRef(false)
     const [open, setOpen] = useState(false);
     const [postGameText, setPostGameText] = useState("")
+    const [postGameText2, setPostGameText2] = useState("")
     
 
 
@@ -51,7 +52,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
 
     const joinRoom = () =>{ //Called immediately on render
         socket.emit("join_room", roomName)
-        console.log(`Joining room ${roomName}`)
+        //console.log(`Joining room ${roomName}`)
     }
 
     
@@ -63,6 +64,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
             setGame(gameCopy); 
             sendBoard(gameCopy.pgn())
             turn.current = false
+            localStorage.setItem("turn", turn.current)
             //console.log(turn.current)
             if(result.captured){
                 captureSound.play()
@@ -166,11 +168,35 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
 
     useEffect(()=>{
         //name = `${name}(${rating})`
-        socket.emit("set_nickname", name)
-        joinRoom()
-        gameOver.current = false
-        setInGame(true)
+        if(localStorage.color){
+            socket.emit("reconnect_room", roomName)
+            color.current = localStorage.getItem('color')
+            //setGame(localStorage.getItem('game'))
+            const gameCopy = new Chess()
+            gameCopy.loadPgn(localStorage.getItem('game'))
+            setGame(gameCopy)
+            setOppRating(localStorage.getItem('oppRating'))
+            setChatLog(JSON.parse(localStorage.getItem('chatLog')))
+            setOpponent(localStorage.getItem('oppName'))
+            setOppTime(localStorage.getItem('oppTime'))
+            setMySeconds(localStorage.getItem('mySeconds'))
+            turn.current = localStorage.getItem('turn')
+            gameOver.current = false
+            setInGame(true)
+        }
+        else{
+            socket.emit("set_nickname", name)
+            joinRoom()
+            gameOver.current = false
+            setInGame(true)
+        }
+        
     }, [])
+
+    useEffect(()=>{
+        //console.log(chatLog)
+        localStorage.setItem("chatLog", JSON.stringify(chatLog))
+    }, [chatLog])
 
     useEffect(()=>{//Updating time, gets called on game start 
         const interval = setInterval(()=>{
@@ -188,6 +214,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
 
     //Not sure why I couldn't put it after setMySeconds above...
     useEffect(()=>{
+        localStorage.setItem("mySeconds", mySeconds)
         //Formatting time
         if(Math.floor(mySeconds/60) < 10 && mySeconds%60 < 10){
             setMyTime("0"+Math.floor(mySeconds/60).toString()+" : 0"+(mySeconds%60).toString())
@@ -247,6 +274,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
                 setWinner("b")
             }
         }
+        localStorage.setItem('game', game.pgn())
     }, [ game ]);
 
     useEffect(()=>{//Handle end of game
@@ -297,17 +325,21 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
             gameCopy.loadPgn(data);
             setGame(gameCopy)
             turn.current = true
+            localStorage.setItem("turn", turn.current)
             //console.log("recieved")
 
         })
         socket.on("receive_color", (col) =>{ //Receive decided color, will be chosen at random and sent here
             color.current = col
+            localStorage.setItem('color', col)
             if(col == "white"){
                 turn.current = true
+                localStorage.setItem("turn", turn.current)
             }
         })
         socket.on("get_opponent", (oppName) =>{ //Receive opponent name
             setOpponent(opponent => oppName)
+            localStorage.setItem("oppName", oppName)
             setChatLog(chatLog =>[...chatLog, oppName+" has joined the room"])
         })
         socket.on("receive_chat", (s)=>{ //Recieve chat
@@ -315,6 +347,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
         })
         socket.on("receive_time", (t)=>{ //Receive time, will be taken/sent every second to stop timers from getting out of sync
             setOppTime(t)
+            localStorage.setItem("oppTime", t)
             //console.log(t)
         })
         socket.on("win_game", (col)=>{ //Only happens if game was won on time
@@ -334,6 +367,7 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
         })
         socket.on("check_reconnect", ()=>{
             socket.emit("reconnect_room", roomName)
+            socket.to(roomName).emit("updateName")
         })
         socket.on("send_opp_rating", () =>{
             socket.emit("send_rating", {room: roomName, rating})
@@ -341,6 +375,21 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
         socket.on("get_opp_rating", (r)=>{
             //console.log(123)
             setOppRating(r)
+            localStorage.setItem("oppRating", r)
+        })
+        socket.on("won_opp_quit", ()=>{
+            /*
+            if(color.current == "white"){
+                setWinner("w")
+            }
+            if(color.current == "black"){
+                setWinner("b")
+            }
+            setPostGameText2("(Opponent has quit)")*/
+            setOpponent("Disconnected...")
+        })
+        socket.on("update_name",()=>{
+            setOpponent(opponent)
         })
     }, [socket])
 
@@ -403,7 +452,8 @@ const Board = ({user, setInGame, rating, socket, setRating}) =>{
         open={open}
       >
         <DialogTitle id="responsive-dialog-title" textAlign={"center"}>
-          {postGameText}
+          {postGameText}{postGameText2}
+          
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
