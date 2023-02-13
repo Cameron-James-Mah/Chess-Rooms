@@ -158,7 +158,7 @@ const Home = ({user, displayName, setInGame, socket}) =>{
                 <Button variant="outlined" onClick={joinBtn} >Enter</Button>
             </div>
             <Typography variant = "h4" align = "center" marginTop={5}>Available Rooms</Typography>
-            <Box sx={{ p: 5, border: '1px dashed grey', alignItems: "center", justifyContent: "center", marginBottom: 10, marginTop: 7, marginLeft: 50, marginRight: 50, minHeight: 400}}>
+            <Box sx={{ p: 5, border: '1px dashed grey', alignItems: "center", justifyContent: "center", marginBottom: 10, marginTop: 7, marginLeft: '20%', marginRight: '20%', minHeight: 400}}>
             
             <Grid container
                 spacing={10}

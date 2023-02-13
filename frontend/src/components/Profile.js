@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 
+import { Link, useNavigate } from "react-router-dom";
+
 import { Box, List, ListItem, ListItemText, Grid, Typography, Button, ListItemButton } from "@mui/material";
+
+import DownloadIcon from '@mui/icons-material/Download';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { IconButton } from "@mui/material";
 
 import Axios from "axios";
 
@@ -11,6 +17,8 @@ const Profile = ({user, displayName, rating}) =>{
     const [name, setName] = useState("")
     const [username, setUserName] = useState("")
     const [userRating, setUserRating] = useState(0)
+
+    const navigate = useNavigate()
     
 
     const getGames = () =>{
@@ -36,25 +44,42 @@ const Profile = ({user, displayName, rating}) =>{
       })
     }
 
-    const downloadTxtFile = (e) => {
-    const element = document.createElement("a");
-    const file = new Blob([e.target.value], {
-      type: "text/plain"
-    });
-    element.href = URL.createObjectURL(file);
-    element.download = "Game.txt";
-    document.body.appendChild(element);
-    element.click();
+    const downloadTxtFile = (s) => {
+      const element = document.createElement("a");
+      const file = new Blob([s], {
+        type: "text/plain"
+      });
+      element.href = URL.createObjectURL(file);
+      element.download = "Game.txt";
+      document.body.appendChild(element);
+      element.click();
+      /*
+      if(e.target.value){
+        navigate("/Analysis", {state: {game: e.target.value}})
+      }
+      else{
+        console.log("Empty game string?")
+      }*/
   };
 
     useEffect(()=>{
         //console.log("Getting games for "+user)
-        getGames()
-        getRecord()
+        if(user){
+          localStorage.setItem('displayName', displayName)
+          localStorage.setItem('user', user)
+          localStorage.setItem('rating', rating)
+        }
+        else{
+          user = localStorage.getItem('user')
+          displayName = localStorage.getItem('displayName')
+          rating = localStorage.getItem('rating')
+        }
+        //console.log(rating)
         setName(displayName)
         setUserName(user)
         setUserRating(rating)
-        console.log(rating)
+        getGames()
+        getRecord()
     },[])
 
     return(
@@ -73,7 +98,7 @@ const Profile = ({user, displayName, rating}) =>{
             <List
             sx={{
               width: '100%',
-      
+              marginTop: '2rem',
               bgcolor: 'background.paper',
               position: 'relative',
               overflow: 'auto',
@@ -85,9 +110,16 @@ const Profile = ({user, displayName, rating}) =>{
             {games.map((elem, i)=>
               <li>
                 <ul>
+                  <div style={{display: 'flex', alignItems: "center", justifyContent: "center"}}>
               <ListItem key={i}>
-                  <Button value = {`${elem}`} onClick = {downloadTxtFile}>{i}. Game</Button>
+                  <Button value = {`${elem}`} component = {Link} to = "/Analysis" state = {{game: `${elem}`}}>{i}. Game</Button>
               </ListItem>
+                <IconButton
+                    aria-label = "Left icon" size = "medium"  color='inherit' onClick={()=> downloadTxtFile(`${elem}`)}
+                >
+                  <DownloadIcon/>
+                </IconButton>
+              </div>
               </ul>
               </li>
             )}
