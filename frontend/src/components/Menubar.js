@@ -211,16 +211,16 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame, setRating}) =>{
             Welcome
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText align='center'>
             <Typography>NOTE: users must be logged in to save games</Typography> 
           </DialogContentText>
-          <DialogContentText>
+          <DialogContentText align='center'>
             <TextField label={displayLbl} variant="filled" onChange={displayNameText} disabled = {action == "Login"} error = {displayNameErr}/>
           </DialogContentText>
-          <DialogContentText>
+          <DialogContentText align='center'>
             <TextField label={userLbl} variant="filled" style={{marginTop: 12}} onChange={userText} error = {userErr}/>
           </DialogContentText>
-          <DialogContentText>
+          <DialogContentText align='center'>
             <TextField label={passLbl} variant="filled" style={{marginTop: 12}} onChange={passText} error = {passwordErr}/>
           </DialogContentText>
         </DialogContent>
