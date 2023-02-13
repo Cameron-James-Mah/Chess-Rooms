@@ -39,14 +39,7 @@ const Home = ({user, displayName, setInGame, socket}) =>{
     }
     
     function joinBtn(e){ //onclick enter
-        if(e.target.value.length < 1 || e.target.value.length > 10){
-            setRoomLabel("Must be between 1-10 length")
-            setInValidRoom(true)
-        }
-        else{
-            socket.emit("check_room_size", room.current)
-        }
-        
+        socket.emit("check_room_size", room.current)
     }
 
     function checkAvailable(rm){ //onclick avialable room
@@ -167,7 +160,7 @@ const Home = ({user, displayName, setInGame, socket}) =>{
             <div>
             <List style={{marginTop: 120}}>
                 <ListItem disablePadding style={{display: 'flex', justifyContent:'center'}}>
-                <TextField id="outlined-basic" label="Enter display name" value = {displayValue} variant="outlined" onChange={updateName}/>
+                <TextField id="outlined-basic" label="Enter display name" variant="outlined" onChange={updateName}/>
                 </ListItem>
                 <ListItem disablePadding style={{display: 'flex', justifyContent:'center', marginTop: 40}}>
                 <TextField id="outlined-basic" label={roomLabel} variant="outlined" onChange={updateRoom} error = {invalidRoom}/>
