@@ -160,7 +160,7 @@ const Menubar = ({setLoggedUser, setLoggedDisplay, inGame, setRating}) =>{
       }).then((response)=>{
         //console.log(response)
         if(response.data){
-          console.log(response.data.Rating)
+          //console.log(response.data.Rating)
           loggedUser.current = user
           loggedIn.current = true
           handleClose()

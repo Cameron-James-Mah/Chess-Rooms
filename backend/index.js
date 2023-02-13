@@ -259,7 +259,7 @@ io.on("connection", (socket)=>{
     socket.on("get_all_rooms_data", ()=>{
         const rooms = io.sockets.adapter.rooms
         let roomsData = []
-        console.log(currentRooms)
+        //console.log(currentRooms)
         for(const room of rooms){
             if(room[0].toString().length <= 10 && room[1].size == 1 && !currentRooms.has(room[0].toString())){ //If user created room and only one person inside
                 //console.log(room[1])
